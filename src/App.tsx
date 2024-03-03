@@ -162,7 +162,7 @@ function App() {
               <Droppable droppableId="droppable">
                 {(provided) => (
                   <div
-                    className="flex flex-col max-h-[30vh] overflow-auto"
+                    className="flex flex-col max-h-[30vh] overflow-y-auto todo"
                     {...provided.droppableProps}
                     ref={provided.innerRef}
                   >
