@@ -80,6 +80,8 @@ function App() {
       return todo;
     });
     setTask(todos);
+    setEdit(false);
+    setValue('');
     localStorage.setItem("todos", JSON.stringify(todos));
   };
   const unCompletTask = (id: string) => {
