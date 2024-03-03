@@ -98,6 +98,7 @@ function App() {
     localStorage.setItem("todos", JSON.stringify(todos));
   };
   const handleOnDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
     const todos = Array.from(tasks);
     const [reorderedItem] = todos.splice(result.source.index, 1);
     todos.splice(
