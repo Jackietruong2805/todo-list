@@ -59,7 +59,7 @@ function App() {
       setValue("");
       return;
     }
-    todos = [...todos, todo];
+    todos = [todo, ...todos];
     localStorage.setItem("todos", JSON.stringify(todos));
     setTask(todos);
     setValue("");
@@ -99,13 +99,35 @@ function App() {
   };
   const handleOnDragEnd = (result: DropResult) => {
     if (!result.destination) return;
-    const todos = Array.from(tasks);
+    let todos = Array.from(tasks);
+    todos = todos.map((todo, index) => {
+      if (result.destination?.droppableId === "TODO") {
+        if (index === result.source.index) {
+          return {
+            ...todo,
+            status: "todo",
+          };
+        }
+      }
+      if (result.destination?.droppableId === "DONE") {
+        if (index === result.source.index) {
+          return {
+            ...todo,
+            status: "complete",
+          };
+        }
+      }
+      return todo;
+    });
     const [reorderedItem] = todos.splice(result.source.index, 1);
-    todos.splice(
-      (result.destination as DraggableLocation).index,
-      0,
-      reorderedItem
-    );
+    const targetPosition =
+      result.destination?.droppableId === "TODO"
+        ? (result.destination as DraggableLocation).index
+        : result.destination?.droppableId === "DONE" &&
+          result.source.droppableId === "TODO"
+        ? (result.destination as DraggableLocation).index - 1
+        : (result.destination as DraggableLocation).index;
+    todos.splice(targetPosition, 0, reorderedItem);
 
     setTask(todos);
     localStorage.setItem("todos", JSON.stringify(todos));
@@ -157,13 +179,13 @@ function App() {
               </button>
             </form>
           )}
-          <div className="pt-3">
-            <h3 className="mb-3 text-xl text-left text-gray-400">Todo</h3>
-            <DragDropContext onDragEnd={handleOnDragEnd}>
-              <Droppable droppableId="droppable">
+          <DragDropContext onDragEnd={handleOnDragEnd}>
+            <div className="pt-3">
+              <h3 className="mb-3 text-xl text-left text-gray-400">Todo</h3>
+              <Droppable droppableId="TODO" type="TASK">
                 {(provided) => (
                   <div
-                    className="flex flex-col max-h-[30vh] overflow-y-auto todo"
+                    className="flex flex-col max-h-[30vh] min-h-[10vh] overflow-y-auto todo"
                     {...provided.droppableProps}
                     ref={provided.innerRef}
                   >
@@ -179,6 +201,7 @@ function App() {
                               deleteTask={deleteTask}
                               onEdit={onEdit}
                               task={task}
+                              status="todo"
                             />
                           );
                         }
@@ -187,42 +210,39 @@ function App() {
                   </div>
                 )}
               </Droppable>
-            </DragDropContext>
-          </div>
-          <div className="pt-3">
-            <h3 className="mb-3 text-xl text-left text-gray-400">Done</h3>
-            <div className="flex flex-col max-h-[30vh] overflow-auto todo">
-              {tasks.length > 0 &&
-                tasks.map((task) => {
-                  if (task.status === "complete") {
-                    return (
-                      <div className="px-3 py-2 mb-4 font-semibold text-white rounded-sm cursor-pointer bg-violet-500">
-                        <div className="flex items-center justify-between">
-                          <span className="line-through decoration-gray-200 text-white/50">
-                            {task.content}
-                          </span>
-                          <span>
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 24 24"
-                              fill="currentColor"
-                              className="w-5 h-5"
-                              onClick={() => unCompletTask(task.id)}
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  }
-                })}
             </div>
-          </div>
+            <div className="pt-3">
+              <h3 className="mb-3 text-xl text-left text-gray-400">Done</h3>
+              <div className="flex flex-col max-h-[30vh] overflow-auto todo">
+                <Droppable droppableId="DONE" type="TASK">
+                  {(provided) => (
+                    <div
+                      className="flex flex-col max-h-[30vh] min-h-[10vh] overflow-y-auto todo"
+                      {...provided.droppableProps}
+                      ref={provided.innerRef}
+                    >
+                      {tasks.length > 0 &&
+                        tasks.map((task, index) => {
+                          if (task.status === "complete") {
+                            return (
+                              <Task
+                                key={task.id}
+                                id={task.id}
+                                index={index}
+                                task={task}
+                                unCompletTask={unCompletTask}
+                                status="complete"
+                              />
+                            );
+                          }
+                        })}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </div>
+            </div>
+          </DragDropContext>
         </div>
       </div>
     </div>
